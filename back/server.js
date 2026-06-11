@@ -1,30 +1,27 @@
-/**
- * TrustExam — Backend (Clean Architecture)
- *
- * Composition root only. All logic lives in dedicated layers:
- *   domain/          — entities, business rules (pure)
- *   application/     — use-case orchestration (services)
- *   infrastructure/  — persistence, file I/O, socket gateway
- *   presentation/    — HTTP routes, Socket.IO event mapping
- *   di/              — dependency injection container
- */
-
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-
 const { createContainer, createDefaultVideosDir } = require('./di/diContainer');
 
 const app = express();
 const server = http.createServer(app);
+
+// Единая конфигурация безопасности
+const corsOptions = {
+  origin: "https://trustexam-ideal-structure.vercel.app",
+  methods: ["GET", "POST", "OPTIONS"],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '100mb' }));
+
+// Инициализация Socket.io с теми же правилами
 const io = new Server(server, {
-  cors: { origin: '*', methods: ['GET', 'POST'] },
+  cors: corsOptions,
   maxHttpBufferSize: 1e8,
 });
-
-app.use(cors({ origin: '*' }));
-app.use(express.json({ limit: '100mb' }));
 
 const container = createContainer({
   io,
