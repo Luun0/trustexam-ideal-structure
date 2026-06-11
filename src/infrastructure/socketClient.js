@@ -1,11 +1,8 @@
-/**
- * Infrastructure — Socket.IO client singleton.
- */
-
 import { io } from 'socket.io-client';
-import { SERVER_URL } from '../domain/serverConfig';
 
-export const socket = io(SERVER_URL, {
+// Используем переменную окружения прямо здесь
+export const socket = io(import.meta.env.VITE_API_URL, {
   transports: ['websocket'],
+  withCredentials: true, // ЭТО КЛЮЧЕВОЕ для CORS
   autoConnect: false,
 });

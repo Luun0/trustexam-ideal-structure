@@ -7,7 +7,7 @@ const { createContainer, createDefaultVideosDir } = require('./di/diContainer');
 const app = express();
 const server = http.createServer(app);
 
-// Единая конфигурация безопасности
+// Единая настройка CORS для API и Сокетов
 const corsOptions = {
   origin: "https://trustexam-ideal-structure.vercel.app",
   methods: ["GET", "POST", "OPTIONS"],
@@ -17,9 +17,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '100mb' }));
 
-// Инициализация Socket.io с теми же правилами
 const io = new Server(server, {
-  cors: corsOptions,
+  cors: corsOptions, // Используем те же правила
   maxHttpBufferSize: 1e8,
 });
 
