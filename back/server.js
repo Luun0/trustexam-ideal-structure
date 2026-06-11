@@ -34,5 +34,5 @@ const container = createContainer({
 container.socketHandler.register();
 app.use('/', container.routes.router);
 
-const PORT = 5000;
-server.listen(PORT, () => console.log(`🚀 TrustExam: http://localhost:${PORT}`));
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => console.log(`🚀 TrustExam: port ${PORT}`));

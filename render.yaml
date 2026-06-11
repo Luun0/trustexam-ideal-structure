@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: trustexam-api
+    runtime: node
+    rootDir: back
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
