@@ -9,9 +9,9 @@ const server = http.createServer(app);
 
 // Единая настройка CORS для API и Сокетов
 const corsOptions = {
-  origin: "https://trustexam-ideal-structure.vercel.app",
+  origin: "*", // Разрешить всё на время отладки
   methods: ["GET", "POST", "OPTIONS"],
-  credentials: true
+  credentials: false // Если origin: "*", credentials должно быть false
 };
 
 app.use(cors(corsOptions));
