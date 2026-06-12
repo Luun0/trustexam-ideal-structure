@@ -6,6 +6,7 @@ import { useTabGuard } from './useTabGuard';
 import { useExamTimer } from './useExamTimer';
 import { QUESTIONS } from './domain/examQuestions';
 import { submitAnswers } from './application/api/studentApi';
+import StudentChat from './StudentChat';
 
 export default function StudentExam({ session, onLogout }) {
   const { studentId, username } = session;
@@ -20,7 +21,6 @@ export default function StudentExam({ session, onLogout }) {
 
   const videoRef = useRef(null);
 
-  // ── Hooks (each has single responsibility) ──────────────────────────────
   const {
     status, statusText, warning, isBlocked,
     initAI, startDetectionLoop, stopDetection,
@@ -49,7 +49,6 @@ export default function StudentExam({ session, onLogout }) {
     onExpire: () => submitExam(),
   });
 
-  // ── Camera preview ──────────────────────────────────────────────────────
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !cameraStream) return;
@@ -57,7 +56,6 @@ export default function StudentExam({ session, onLogout }) {
     video.play().catch(() => {});
   }, [cameraStream, phase]);
 
-  // ── Handlers ─────────────────────────────────────────────────────────────
   async function handleCamera() {
     try {
       const stream = await requestCamera();
@@ -159,6 +157,8 @@ export default function StudentExam({ session, onLogout }) {
         )}
         <button onClick={onLogout} style={{ ...S.logoutBtn, marginTop: 24 }}>← Выйти на главную</button>
       </div>
+      {/* Чат доступен и после сдачи */}
+      <StudentChat studentId={studentId} username={username} />
     </div>
   );
 
@@ -205,6 +205,8 @@ export default function StudentExam({ session, onLogout }) {
             </button>
           </div>
         </div>
+        {/* Чат доступен на этапе подготовки */}
+        <StudentChat studentId={studentId} username={username} />
       </div>
     );
   }
@@ -339,6 +341,9 @@ export default function StudentExam({ session, onLogout }) {
           </div>
         </main>
       </div>
+
+      {/* Чат — floating кнопка внизу справа, поверх всего */}
+      <StudentChat studentId={studentId} username={username} />
     </div>
   );
 }

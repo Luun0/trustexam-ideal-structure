@@ -1,10 +1,9 @@
 /**
- * ProctorDashboard.jsx v4
- * Таб "Записи": для каждого студента две кнопки — "Экран" и "Лицо"
+ * ProctorDashboard.jsx
  */
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useProctorSocket } from './application/hooks/useProctorSocket';
+import ProctorChat from './application/hooks/ProctorChat';
 import * as studentApi from './application/api/studentApi';
 import * as recordingApi from './application/api/recordingApi';
 import { SERVER_URL } from './domain/serverConfig';
@@ -27,11 +26,13 @@ export default function ProctorDashboard({ session }) {
   const [playingUrl, setPlayingUrl]     = useState(null);
   const [playingTitle, setPlayingTitle] = useState('');
   const [scoreInput, setScoreInput]     = useState('');
+  const [chatUnread, setChatUnread]     = useState(0);
 
   const commentsEndRef = useRef(null);
 
   useEffect(() => {
     if (tab === 'recordings') loadRecordings();
+    if (tab === 'chat') setChatUnread(0);
   }, [tab]);
 
   async function loadRecordings() {
@@ -91,6 +92,17 @@ export default function ProctorDashboard({ session }) {
           </button>
           <button onClick={() => setTab('recordings')} style={{ ...S.tabBtn, ...(tab === 'recordings' ? S.tabBtnActive : {}) }}>
             🎥 Записи
+          </button>
+          <button onClick={() => setTab('chat')} style={{ ...S.tabBtn, ...(tab === 'chat' ? S.tabBtnActive : {}), position: 'relative' }}>
+            💬 Чаты
+            {chatUnread > 0 && (
+              <span style={{
+                position: 'absolute', top: -4, right: -4,
+                background: '#EF4444', color: '#fff', borderRadius: '50%',
+                width: 16, height: 16, fontSize: 10, fontWeight: 700,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>{chatUnread}</span>
+            )}
           </button>
         </div>
 
@@ -155,7 +167,6 @@ export default function ProctorDashboard({ session }) {
                     </div>
                   </div>
                   <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    {/* Кнопки просмотра двух видео */}
                     {selectedStudent.screenUrl && (
                       <button onClick={() => openVideo(selectedStudent.screenUrl, `${selectedStudent.name} — Экран`)}
                         style={{ ...S.verdictBtn, background: '#0C2240', color: '#60A5FA' }}>
@@ -181,7 +192,6 @@ export default function ProctorDashboard({ session }) {
                   <MiniStat label="Оценка проктора" value={selectedStudent.score ?? '—'} />
                 </div>
 
-                {/* Выставить оценку */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 24px', borderBottom: '1px solid #1E293B' }}>
                   <span style={{ fontSize: 12, color: '#64748B', flexShrink: 0 }}>Выставить оценку:</span>
                   <input value={scoreInput} onChange={e => setScoreInput(e.target.value)}
@@ -238,7 +248,6 @@ export default function ProctorDashboard({ session }) {
             <div style={S.recordingsGrid}>
               {recordings.map(rec => (
                 <div key={rec.hash} style={S.recCard}>
-                  {/* Два превью — экран и лицо */}
                   <div style={{ display: 'flex', gap: 2 }}>
                     <div style={{ ...S.recThumb, flex: 1 }} onClick={() => openVideo(rec.screenUrl, `${rec.studentName} — Экран`)}>
                       <span style={{ fontSize: 24 }}>🖥</span>
@@ -258,31 +267,20 @@ export default function ProctorDashboard({ session }) {
                       </div>
                     )}
                   </div>
-
                   <div style={S.recInfo}>
                     <div style={S.recStudent}>{rec.studentName}</div>
                     <div style={S.recHash}>🔑 {rec.hash}</div>
                     <div style={S.recMeta}>{new Date(rec.created).toLocaleString('ru-RU')}</div>
-
-                    {/* Кнопки просмотра */}
                     <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
                       <button onClick={() => openVideo(rec.screenUrl, `${rec.studentName} — Экран`)}
-                        style={{ ...S.recBtn, background: '#1D4ED8' }}>
-                        ▶ Экран
-                      </button>
+                        style={{ ...S.recBtn, background: '#1D4ED8' }}>▶ Экран</button>
                       {rec.faceUrl && (
                         <button onClick={() => openVideo(rec.faceUrl, `${rec.studentName} — Лицо`)}
-                          style={{ ...S.recBtn, background: '#6D28D9' }}>
-                          ▶ Лицо
-                        </button>
+                          style={{ ...S.recBtn, background: '#6D28D9' }}>▶ Лицо</button>
                       )}
-                      <a href={SERVER_URL + rec.screenUrl} download={`${rec.hash}_screen.webm`} style={S.recBtnDownload}>
-                        ↓ Экран
-                      </a>
+                      <a href={SERVER_URL + rec.screenUrl} download={`${rec.hash}_screen.webm`} style={S.recBtnDownload}>↓ Экран</a>
                       {rec.faceUrl && (
-                        <a href={SERVER_URL + rec.faceUrl} download={`${rec.hash}_face.webm`} style={S.recBtnDownload}>
-                          ↓ Лицо
-                        </a>
+                        <a href={SERVER_URL + rec.faceUrl} download={`${rec.hash}_face.webm`} style={S.recBtnDownload}>↓ Лицо</a>
                       )}
                     </div>
                   </div>
@@ -291,6 +289,16 @@ export default function ProctorDashboard({ session }) {
             </div>
           )}
         </div>
+      )}
+
+      {/* ── CHAT TAB ─────────────────────────────────────────────────── */}
+      {tab === 'chat' && (
+        <ProctorChat
+          proctorName={username}
+          onNewMessage={() => {
+            if (tab !== 'chat') setChatUnread(n => n + 1);
+          }}
+        />
       )}
 
       {/* ── Видеоплеер ────────────────────────────────────────────────── */}
@@ -304,9 +312,7 @@ export default function ProctorDashboard({ session }) {
             <video src={playingUrl} controls autoPlay
               style={{ width: '100%', borderRadius: 8, background: '#000', maxHeight: '70vh' }} />
             <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
-              <a href={playingUrl} download style={{ ...S.recBtnDownload, textAlign: 'center' }}>
-                ↓ Скачать это видео
-              </a>
+              <a href={playingUrl} download style={{ ...S.recBtnDownload, textAlign: 'center' }}>↓ Скачать это видео</a>
             </div>
           </div>
         </div>
