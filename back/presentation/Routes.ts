@@ -80,7 +80,9 @@ export class Routes {
     });
 
     r.post('/api/recording/chunk', express.raw({ type: 'video/webm', limit: '20mb' }), (req, res) => {
-      const studentId = req.headers['x-student-id'] as string;
+      // Decode studentId in case it was URL-encoded to avoid header encoding issues
+      const rawId = req.headers['x-student-id'] as string;
+      const studentId = rawId ? decodeURIComponent(rawId) : rawId;
       const type = req.headers['x-recording-type'] as RecordingType;
       const result = this._recording.writeChunk(studentId, type, Buffer.from(req.body));
       result ? res.json({ success: true, ...result }) : res.status(404).json({ error: 'No session' });

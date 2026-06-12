@@ -11,11 +11,13 @@ export async function startRecording(studentId: string): Promise<{ hash: string 
 }
 
 export async function sendChunk(studentId: string, type: string, arrayBuffer: ArrayBuffer): Promise<Response> {
+  // Encode studentId to avoid non-ISO-8859-1 characters in headers
+  const safeId = encodeURIComponent(studentId);
   return fetch(`${SERVER_URL}/api/recording/chunk`, {
     method: 'POST',
     headers: {
       'Content-Type': 'video/webm',
-      'x-student-id': studentId,
+      'x-student-id': safeId,
       'x-recording-type': type,
     },
     body: arrayBuffer,

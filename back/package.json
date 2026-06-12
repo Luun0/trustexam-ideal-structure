@@ -6,7 +6,7 @@
     "node": "20.x"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "cd .. && npx tsc -p back/tsconfig.json",
     "postinstall": "npm run build",
     "start": "node dist/back/server.js",
     "dev": "nodemon --exec ts-node server.ts"
