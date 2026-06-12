@@ -1,8 +1,9 @@
 import { io } from 'socket.io-client';
 
-// Используем переменную окружения прямо здесь
-export const socket = io(import.meta.env.VITE_API_URL, {
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+export const socket = io(API_URL, {
   transports: ['websocket'],
-  withCredentials: true, // ЭТО КЛЮЧЕВОЕ для CORS
+  withCredentials: false,
   autoConnect: false,
 });
