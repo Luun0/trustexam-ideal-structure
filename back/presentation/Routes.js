@@ -40,12 +40,30 @@ class Routes {
       }
     });
 
-    // Оставшиеся эндпоинты API
     r.get('/api/students', (req, res) => res.json(this._students.getAll()));
+
+    r.get('/api/recordings', (req, res) => {
+      res.json(this._recording.listAll());
+    });
     
     r.post('/api/students/:id/comment', (req, res) => {
       const ok = this._students.addComment(req.params.id, req.body);
       ok ? res.json({ success: true }) : res.status(404).json({ error: 'Not found' });
+    });
+
+    r.post('/api/students/:id/verdict', (req, res) => {
+      const ok = this._students.setVerdict(req.params.id, req.body.verdict);
+      ok ? res.json({ success: true }) : res.status(404).json({ error: 'Not found' });
+    });
+
+    r.post('/api/students/:id/score', (req, res) => {
+      const ok = this._students.setScore(req.params.id, req.body.score);
+      ok ? res.json({ success: true }) : res.status(404).json({ error: 'Not found' });
+    });
+
+    r.post('/api/students/:id/submit-answers', (req, res) => {
+      const result = this._students.submitAnswers(req.params.id, req.body.answers);
+      result ? res.json(result) : res.status(404).json({ error: 'Not found' });
     });
 
     r.post('/api/recording/start', (req, res) => {
@@ -55,7 +73,11 @@ class Routes {
     });
 
     r.post('/api/recording/chunk', express.raw({ type: 'video/webm', limit: '20mb' }), (req, res) => {
-      const result = this._recording.writeChunk(req.headers['x-student-id'], req.headers['x-recording-type'], Buffer.from(req.body));
+      const result = this._recording.writeChunk(
+        req.headers['x-student-id'],
+        req.headers['x-recording-type'],
+        Buffer.from(req.body)
+      );
       result ? res.json({ success: true, ...result }) : res.status(404).json({ error: 'No session' });
     });
 

@@ -6,7 +6,7 @@ import { useTabGuard } from './useTabGuard';
 import { useExamTimer } from './useExamTimer';
 import { QUESTIONS } from './domain/examQuestions';
 import { submitAnswers } from './application/api/studentApi';
-import StudentChat from './StudentChat';
+import StudentChat from './Studentсhat';
 
 export default function StudentExam({ session, onLogout }) {
   const { studentId, username } = session;

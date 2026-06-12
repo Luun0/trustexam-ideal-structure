@@ -41,7 +41,9 @@ export default function ProctorDashboard({ session }) {
     } catch { console.error('Failed to load recordings'); }
   }
 
-  useEffect(() => { commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [students, selectedId]);
+  useEffect(() => {
+    commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [students, selectedId]);
 
   const selectedStudent = students.find(s => s.id === selectedId);
 
@@ -115,191 +117,187 @@ export default function ProctorDashboard({ session }) {
       </header>
 
       {/* ── STUDENTS TAB ──────────────────────────────────────────────── */}
-      {tab === 'students' && (
-        <div style={S.body}>
-          <aside style={S.studentList}>
-            <div style={S.listHeader}>Студенты</div>
-            {students.length === 0 && <div style={S.emptyList}>Ожидание студентов...</div>}
-            {students.map(student => {
-              const cfg = STATUS_CONFIG[student.status] || STATUS_CONFIG.offline;
-              const isSelected = student.id === selectedId;
-              return (
-                <div key={student.id} onClick={() => setSelectedId(student.id)}
-                  style={{ ...S.studentCard, ...(isSelected ? S.studentCardSelected : {}) }}>
-                  <div style={S.avatar}>{student.name[0].toUpperCase()}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={S.studentName}>{student.name}</div>
-                    <div style={S.studentExam}>{student.examTitle}</div>
-                    {student.recordingHash && (
-                      <div style={{ fontSize: 10, color: '#475569', fontFamily: 'monospace', marginTop: 2 }}>
-                        🎥 {student.recordingHash}
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-                    <span style={{ ...S.statusBadge, color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
-                    {student.violations > 0 && <span style={S.violBadge}>{student.violations} наруш.</span>}
-                  </div>
+      <div style={{ display: tab === 'students' ? 'flex' : 'none', flex: 1, overflow: 'hidden' }}>
+        <aside style={S.studentList}>
+          <div style={S.listHeader}>Студенты</div>
+          {students.length === 0 && <div style={S.emptyList}>Ожидание студентов...</div>}
+          {students.map(student => {
+            const cfg = STATUS_CONFIG[student.status] || STATUS_CONFIG.offline;
+            const isSelected = student.id === selectedId;
+            return (
+              <div key={student.id} onClick={() => setSelectedId(student.id)}
+                style={{ ...S.studentCard, ...(isSelected ? S.studentCardSelected : {}) }}>
+                <div style={S.avatar}>{student.name[0].toUpperCase()}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={S.studentName}>{student.name}</div>
+                  <div style={S.studentExam}>{student.examTitle}</div>
+                  {student.recordingHash && (
+                    <div style={{ fontSize: 10, color: '#475569', fontFamily: 'monospace', marginTop: 2 }}>
+                      🎥 {student.recordingHash}
+                    </div>
+                  )}
                 </div>
-              );
-            })}
-          </aside>
-
-          <main style={S.detail}>
-            {!selectedStudent ? (
-              <div style={S.noSelection}>
-                <span style={{ fontSize: 48 }}>👈</span>
-                <p>Выберите студента из списка</p>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                  <span style={{ ...S.statusBadge, color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
+                  {student.violations > 0 && <span style={S.violBadge}>{student.violations} наруш.</span>}
+                </div>
               </div>
-            ) : (
-              <>
-                <div style={S.detailHeader}>
-                  <div style={S.detailAvatar}>{selectedStudent.name[0].toUpperCase()}</div>
-                  <div>
-                    <div style={S.detailName}>{selectedStudent.name}</div>
-                    <div style={S.detailSub}>
-                      {selectedStudent.examTitle} · Вошёл в {selectedStudent.joinedAt}
-                      {selectedStudent.recordingHash && (
-                        <span style={{ marginLeft: 10, fontFamily: 'monospace', color: '#475569' }}>
-                          hash: {selectedStudent.recordingHash}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    {selectedStudent.screenUrl && (
-                      <button onClick={() => openVideo(selectedStudent.screenUrl, `${selectedStudent.name} — Экран`)}
-                        style={{ ...S.verdictBtn, background: '#0C2240', color: '#60A5FA' }}>
-                        🖥 Экран
-                      </button>
-                    )}
-                    {selectedStudent.faceUrl && (
-                      <button onClick={() => openVideo(selectedStudent.faceUrl, `${selectedStudent.name} — Лицо`)}
-                        style={{ ...S.verdictBtn, background: '#1A0A2E', color: '#C084FC' }}>
-                        📷 Лицо
-                      </button>
-                    )}
-                    <button onClick={() => setVerdict('cleared')} style={{ ...S.verdictBtn, ...S.verdictClear }}>✅ Оправдать</button>
-                    <button onClick={() => setVerdict('banned')} style={{ ...S.verdictBtn, ...S.verdictBan }}>🚫 Забанить</button>
-                  </div>
-                </div>
+            );
+          })}
+        </aside>
 
-                <div style={S.statsRow}>
-                  <MiniStat label="Нарушений" value={selectedStudent.violations} danger={selectedStudent.violations >= 3} />
-                  <MiniStat label="Комментариев" value={selectedStudent.comments.length} />
-                  <MiniStat label="Статус" value={(STATUS_CONFIG[selectedStudent.status] || STATUS_CONFIG.offline).label} />
-                  <MiniStat label="Автооценка" value={selectedStudent.autoScore != null ? `${selectedStudent.autoScore}%` : '—'} />
-                  <MiniStat label="Оценка проктора" value={selectedStudent.score ?? '—'} />
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 24px', borderBottom: '1px solid #1E293B' }}>
-                  <span style={{ fontSize: 12, color: '#64748B', flexShrink: 0 }}>Выставить оценку:</span>
-                  <input value={scoreInput} onChange={e => setScoreInput(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && submitScore()}
-                    placeholder="напр. 85 или A+"
-                    style={{ ...S.commentInput, flex: 1, fontSize: 13, padding: '7px 12px' }} />
-                  <button onClick={submitScore} style={{ ...S.commentBtn, padding: '7px 16px', fontSize: 13 }}>Сохранить</button>
-                </div>
-
-                <div style={S.logTitle}>Журнал событий</div>
-                <div style={S.logContainer}>
-                  {selectedStudent.comments.length === 0 && <div style={S.logEmpty}>Нарушений не зафиксировано</div>}
-                  {selectedStudent.comments.map((c, i) => (
-                    <div key={c.id || i} style={{
-                      ...S.logEntry,
-                      ...(c.isAI ? S.logEntryAI : {}),
-                      ...(c.severity === 'critical' ? S.logEntryCritical : {}),
-                    }}>
-                      <span style={S.logAuthor}>{c.author}</span>
-                      <span style={S.logText}>{c.text}</span>
-                      <span style={S.logTime}>{c.time}</span>
-                    </div>
-                  ))}
-                  <div ref={commentsEndRef} />
-                </div>
-
-                <div style={S.commentBox}>
-                  <input value={commentText} onChange={e => setCommentText(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && sendComment()}
-                    placeholder="Добавить комментарий проктора..."
-                    style={S.commentInput} />
-                  <button onClick={sendComment} style={S.commentBtn}>Отправить</button>
-                </div>
-              </>
-            )}
-          </main>
-        </div>
-      )}
-
-      {/* ── RECORDINGS TAB ───────────────────────────────────────────── */}
-      {tab === 'recordings' && (
-        <div style={{ flex: 1, padding: 24, overflowY: 'auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <h2 style={{ margin: 0, fontSize: 18 }}>Сохранённые записи</h2>
-            <button onClick={loadRecordings} style={S.refreshBtn}>↻ Обновить</button>
-          </div>
-
-          {recordings.length === 0 ? (
-            <div style={{ color: '#475569', textAlign: 'center', marginTop: 60, fontSize: 16 }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>🎥</div>
-              Записи появятся когда студенты начнут экзамен.
+        <main style={S.detail}>
+          {!selectedStudent ? (
+            <div style={S.noSelection}>
+              <span style={{ fontSize: 48 }}>👈</span>
+              <p>Выберите студента из списка</p>
             </div>
           ) : (
-            <div style={S.recordingsGrid}>
-              {recordings.map(rec => (
-                <div key={rec.hash} style={S.recCard}>
-                  <div style={{ display: 'flex', gap: 2 }}>
-                    <div style={{ ...S.recThumb, flex: 1 }} onClick={() => openVideo(rec.screenUrl, `${rec.studentName} — Экран`)}>
-                      <span style={{ fontSize: 24 }}>🖥</span>
-                      <span style={{ fontSize: 11, marginTop: 4, color: '#60A5FA' }}>Экран</span>
-                      <span style={{ fontSize: 10, color: '#475569', marginTop: 2 }}>{formatSize(rec.screenSize)}</span>
-                    </div>
-                    {rec.faceUrl ? (
-                      <div style={{ ...S.recThumb, flex: 1, borderLeft: '1px solid #0F172A' }} onClick={() => openVideo(rec.faceUrl, `${rec.studentName} — Лицо`)}>
-                        <span style={{ fontSize: 24 }}>📷</span>
-                        <span style={{ fontSize: 11, marginTop: 4, color: '#C084FC' }}>Лицо</span>
-                        <span style={{ fontSize: 10, color: '#475569', marginTop: 2 }}>{formatSize(rec.faceSize)}</span>
-                      </div>
-                    ) : (
-                      <div style={{ ...S.recThumb, flex: 1, borderLeft: '1px solid #0F172A', opacity: 0.3 }}>
-                        <span style={{ fontSize: 24 }}>📷</span>
-                        <span style={{ fontSize: 11, marginTop: 4, color: '#475569' }}>Нет</span>
-                      </div>
+            <>
+              <div style={S.detailHeader}>
+                <div style={S.detailAvatar}>{selectedStudent.name[0].toUpperCase()}</div>
+                <div>
+                  <div style={S.detailName}>{selectedStudent.name}</div>
+                  <div style={S.detailSub}>
+                    {selectedStudent.examTitle} · Вошёл в {selectedStudent.joinedAt}
+                    {selectedStudent.recordingHash && (
+                      <span style={{ marginLeft: 10, fontFamily: 'monospace', color: '#475569' }}>
+                        hash: {selectedStudent.recordingHash}
+                      </span>
                     )}
                   </div>
-                  <div style={S.recInfo}>
-                    <div style={S.recStudent}>{rec.studentName}</div>
-                    <div style={S.recHash}>🔑 {rec.hash}</div>
-                    <div style={S.recMeta}>{new Date(rec.created).toLocaleString('ru-RU')}</div>
-                    <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
-                      <button onClick={() => openVideo(rec.screenUrl, `${rec.studentName} — Экран`)}
-                        style={{ ...S.recBtn, background: '#1D4ED8' }}>▶ Экран</button>
-                      {rec.faceUrl && (
-                        <button onClick={() => openVideo(rec.faceUrl, `${rec.studentName} — Лицо`)}
-                          style={{ ...S.recBtn, background: '#6D28D9' }}>▶ Лицо</button>
-                      )}
-                      <a href={SERVER_URL + rec.screenUrl} download={`${rec.hash}_screen.webm`} style={S.recBtnDownload}>↓ Экран</a>
-                      {rec.faceUrl && (
-                        <a href={SERVER_URL + rec.faceUrl} download={`${rec.hash}_face.webm`} style={S.recBtnDownload}>↓ Лицо</a>
-                      )}
+                </div>
+                <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {selectedStudent.screenUrl && (
+                    <button onClick={() => openVideo(selectedStudent.screenUrl, `${selectedStudent.name} — Экран`)}
+                      style={{ ...S.verdictBtn, background: '#0C2240', color: '#60A5FA' }}>
+                      🖥 Экран
+                    </button>
+                  )}
+                  {selectedStudent.faceUrl && (
+                    <button onClick={() => openVideo(selectedStudent.faceUrl, `${selectedStudent.name} — Лицо`)}
+                      style={{ ...S.verdictBtn, background: '#1A0A2E', color: '#C084FC' }}>
+                      📷 Лицо
+                    </button>
+                  )}
+                  <button onClick={() => setVerdict('cleared')} style={{ ...S.verdictBtn, ...S.verdictClear }}>✅ Оправдать</button>
+                  <button onClick={() => setVerdict('banned')} style={{ ...S.verdictBtn, ...S.verdictBan }}>🚫 Забанить</button>
+                </div>
+              </div>
+
+              <div style={S.statsRow}>
+                <MiniStat label="Нарушений" value={selectedStudent.violations} danger={selectedStudent.violations >= 3} />
+                <MiniStat label="Комментариев" value={selectedStudent.comments.length} />
+                <MiniStat label="Статус" value={(STATUS_CONFIG[selectedStudent.status] || STATUS_CONFIG.offline).label} />
+                <MiniStat label="Автооценка" value={selectedStudent.autoScore != null ? `${selectedStudent.autoScore}%` : '—'} />
+                <MiniStat label="Оценка проктора" value={selectedStudent.score ?? '—'} />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 24px', borderBottom: '1px solid #1E293B' }}>
+                <span style={{ fontSize: 12, color: '#64748B', flexShrink: 0 }}>Выставить оценку:</span>
+                <input value={scoreInput} onChange={e => setScoreInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && submitScore()}
+                  placeholder="напр. 85 или A+"
+                  style={{ ...S.commentInput, flex: 1, fontSize: 13, padding: '7px 12px' }} />
+                <button onClick={submitScore} style={{ ...S.commentBtn, padding: '7px 16px', fontSize: 13 }}>Сохранить</button>
+              </div>
+
+              <div style={S.logTitle}>Журнал событий</div>
+              <div style={S.logContainer}>
+                {selectedStudent.comments.length === 0 && <div style={S.logEmpty}>Нарушений не зафиксировано</div>}
+                {selectedStudent.comments.map((c, i) => (
+                  <div key={c.id || i} style={{
+                    ...S.logEntry,
+                    ...(c.isAI ? S.logEntryAI : {}),
+                    ...(c.severity === 'critical' ? S.logEntryCritical : {}),
+                  }}>
+                    <span style={S.logAuthor}>{c.author}</span>
+                    <span style={S.logText}>{c.text}</span>
+                    <span style={S.logTime}>{c.time}</span>
+                  </div>
+                ))}
+                <div ref={commentsEndRef} />
+              </div>
+
+              <div style={S.commentBox}>
+                <input value={commentText} onChange={e => setCommentText(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && sendComment()}
+                  placeholder="Добавить комментарий проктора..."
+                  style={S.commentInput} />
+                <button onClick={sendComment} style={S.commentBtn}>Отправить</button>
+              </div>
+            </>
+          )}
+        </main>
+      </div>
+
+      {/* ── RECORDINGS TAB ───────────────────────────────────────────── */}
+      <div style={{ display: tab === 'recordings' ? 'flex' : 'none', flex: 1, padding: 24, overflowY: 'auto', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <h2 style={{ margin: 0, fontSize: 18 }}>Сохранённые записи</h2>
+          <button onClick={loadRecordings} style={S.refreshBtn}>↻ Обновить</button>
+        </div>
+
+        {recordings.length === 0 ? (
+          <div style={{ color: '#475569', textAlign: 'center', marginTop: 60, fontSize: 16 }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🎥</div>
+            Записи появятся когда студенты начнут экзамен.
+          </div>
+        ) : (
+          <div style={S.recordingsGrid}>
+            {recordings.map(rec => (
+              <div key={rec.hash} style={S.recCard}>
+                <div style={{ display: 'flex', gap: 2 }}>
+                  <div style={{ ...S.recThumb, flex: 1 }} onClick={() => openVideo(rec.screenUrl, `${rec.studentName} — Экран`)}>
+                    <span style={{ fontSize: 24 }}>🖥</span>
+                    <span style={{ fontSize: 11, marginTop: 4, color: '#60A5FA' }}>Экран</span>
+                    <span style={{ fontSize: 10, color: '#475569', marginTop: 2 }}>{formatSize(rec.screenSize)}</span>
+                  </div>
+                  {rec.faceUrl ? (
+                    <div style={{ ...S.recThumb, flex: 1, borderLeft: '1px solid #0F172A' }} onClick={() => openVideo(rec.faceUrl, `${rec.studentName} — Лицо`)}>
+                      <span style={{ fontSize: 24 }}>📷</span>
+                      <span style={{ fontSize: 11, marginTop: 4, color: '#C084FC' }}>Лицо</span>
+                      <span style={{ fontSize: 10, color: '#475569', marginTop: 2 }}>{formatSize(rec.faceSize)}</span>
                     </div>
+                  ) : (
+                    <div style={{ ...S.recThumb, flex: 1, borderLeft: '1px solid #0F172A', opacity: 0.3 }}>
+                      <span style={{ fontSize: 24 }}>📷</span>
+                      <span style={{ fontSize: 11, marginTop: 4, color: '#475569' }}>Нет</span>
+                    </div>
+                  )}
+                </div>
+                <div style={S.recInfo}>
+                  <div style={S.recStudent}>{rec.studentName}</div>
+                  <div style={S.recHash}>🔑 {rec.hash}</div>
+                  <div style={S.recMeta}>{new Date(rec.created).toLocaleString('ru-RU')}</div>
+                  <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+                    <button onClick={() => openVideo(rec.screenUrl, `${rec.studentName} — Экран`)}
+                      style={{ ...S.recBtn, background: '#1D4ED8' }}>▶ Экран</button>
+                    {rec.faceUrl && (
+                      <button onClick={() => openVideo(rec.faceUrl, `${rec.studentName} — Лицо`)}
+                        style={{ ...S.recBtn, background: '#6D28D9' }}>▶ Лицо</button>
+                    )}
+                    <a href={SERVER_URL + rec.screenUrl} download={`${rec.hash}_screen.webm`} style={S.recBtnDownload}>↓ Экран</a>
+                    {rec.faceUrl && (
+                      <a href={SERVER_URL + rec.faceUrl} download={`${rec.hash}_face.webm`} style={S.recBtnDownload}>↓ Лицо</a>
+                    )}
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-      {/* ── CHAT TAB ─────────────────────────────────────────────────── */}
-      {tab === 'chat' && (
+      {/* ── CHAT TAB — всегда в DOM, просто скрыт ────────────────────── */}
+      <div style={{ display: tab === 'chat' ? 'flex' : 'none', flex: 1, overflow: 'hidden' }}>
         <ProctorChat
           proctorName={username}
           onNewMessage={() => {
             if (tab !== 'chat') setChatUnread(n => n + 1);
           }}
         />
-      )}
+      </div>
 
       {/* ── Видеоплеер ────────────────────────────────────────────────── */}
       {playingUrl && (
@@ -349,7 +347,6 @@ const S = {
   tabBtnActive: { background: '#2563EB', color: '#fff', fontWeight: 600 },
   headerStats: { display: 'flex', gap: 24, marginLeft: 'auto' },
   headerUser: { fontSize: 13, color: '#64748B' },
-  body: { display: 'flex', flex: 1, overflow: 'hidden' },
   studentList: { width: 280, borderRight: '1px solid #1E293B', overflowY: 'auto', flexShrink: 0 },
   listHeader: { padding: '14px 16px', fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: 1, borderBottom: '1px solid #1E293B' },
   emptyList: { padding: 24, color: '#475569', fontSize: 14, textAlign: 'center' },
