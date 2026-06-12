@@ -1,4 +1,4 @@
-# TrustExam — Clean Architecture
+# TrustExam — Clean Architecture + TypeScript
 
 Система онлайн-прокторинга с разделением на слои по принципам **High Cohesion, Low Coupling**.
 
@@ -8,8 +8,15 @@
 ```bash
 cd back
 npm install
-node server.js
+npm run build
+npm start
 # → http://localhost:5000
+```
+
+Разработка с hot-reload:
+```bash
+cd back
+npm run dev
 ```
 
 ### Frontend
@@ -27,71 +34,98 @@ npm run dev
 
 ## Архитектура
 
+### Shared (`shared/types/`)
+
+Общие TypeScript-контракты для frontend и backend:
+- `student.ts` — Student, Comment, GradeResult
+- `recording.ts` — RecordingListItem, StopRecordingResult
+- `socket.ts` — ServerToClientEvents, ClientToServerEvents
+- `chat.ts` — ChatMessage
+- `session.ts` — Session (логин)
+
 ### Backend (`back/`)
 
 ```
 back/
 ├── domain/                    # Бизнес-правила (чистая логика, без I/O)
-│   ├── examConfig.js          # Константы экзамена, пороги нарушений
-│   ├── AnswerGrader.js        # Автопроверка ответов
-│   ├── ViolationRules.js      # Правила бана/предупреждения
-│   ├── StudentFactory.js      # Создание сущности студента
-│   └── CommentFactory.js      # Создание комментариев
+│   ├── examConfig.ts
+│   ├── AnswerGrader.ts
+│   ├── ViolationRules.ts
+│   ├── StudentFactory.ts
+│   └── CommentFactory.ts
 │
 ├── application/               # Сценарии использования (оркестрация)
-│   ├── StudentService.js      # join, verdict, score, violations…
-│   ├── RecordingService.js    # start/stop/chunk/list recordings
-│   └── BroadcastNotifier.js   # Рассылка students_update
+│   ├── StudentService.ts
+│   ├── RecordingService.ts
+│   └── BroadcastNotifier.ts
 │
 ├── infrastructure/            # Внешние зависимости
 │   ├── repositories/
-│   │   ├── InMemoryStudentRepository.js
-│   │   └── FileRecordingRepository.js
+│   │   ├── IRepositories.ts       # Интерфейсы (контракты)
+│   │   ├── InMemoryStudentRepository.ts
+│   │   └── FileRecordingRepository.ts
 │   └── socket/
-│       └── BanGateway.js
+│       └── BanGateway.ts
 │
 ├── presentation/              # Точки входа (HTTP, WebSocket)
-│   ├── Routes.js              # Express-маршруты
-│   └── SocketHandler.js       # Socket.IO-события
+│   ├── Routes.ts
+│   └── SocketHandler.ts
 │
 ├── di/
-│   └── diContainer.js         # Dependency Injection — сборка графа
+│   └── diContainer.ts         # Dependency Injection — сборка графа
 │
-└── server.js                  # Composition root (только bootstrap)
+└── server.ts                  # Composition root (только bootstrap)
 ```
 
 **SOLID:**
-- **S** — каждый класс решает одну задачу (`AnswerGrader` только проверяет ответы)
+- **S** — каждый класс решает одну задачу
 - **O** — новые репозитории подключаются через DI без изменения сервисов
-- **L** — репозитории взаимозаменяемы через контракт
+- **L** — репозитории взаимозаменяемы через `IStudentRepository` / `IRecordingRepository`
 - **I** — сервисы зависят только от нужных абстракций
-- **D** — `Routes` и `SocketHandler` зависят от `StudentService`, а не от `fs`/`Map`
+- **D** — `Routes` и `SocketHandler` зависят от сервисов, а не от `fs`/`Map`
 
 ### Frontend (`src/`)
 
 ```
 src/
 ├── domain/                    # Статические данные и конфигурация
-│   ├── examQuestions.js
-│   └── serverConfig.js
+│   ├── examQuestions.ts
+│   └── serverConfig.ts
 │
 ├── application/               # Бизнес-операции и хуки
 │   ├── api/
-│   │   ├── studentApi.js
-│   │   └── recordingApi.js
+│   │   ├── studentApi.ts
+│   │   └── recordingApi.ts
 │   └── hooks/
-│       └── useProctorSocket.js
+│       ├── useProctorSocket.ts
+│       ├── useExamSocket.ts
+│       ├── useExamTimer.ts
+│       ├── useTabGuard.ts
+│       ├── useProctoring.ts
+│       └── useRecording.ts
 │
 ├── infrastructure/            # Внешние клиенты
-│   └── socketClient.js
+│   └── socketClient.ts
 │
-├── presentation/              # UI-компоненты (корень src/)
-│   ├── App.jsx
-│   ├── StudentExam.jsx
-│   └── ProctorDashboard.jsx
+├── presentation/              # UI-компоненты
+│   ├── App.tsx
+│   ├── StudentExam.tsx
+│   ├── ProctorDashboard.tsx
+│   ├── StudentChat.tsx
+│   └── ProctorChat.tsx
 │
-└── use*.js                    # Хуки прокторинга, записи, таймера
+└── main.tsx
 ```
+
+---
+
+## TypeScript
+
+| Часть | Как собирается |
+|-------|----------------|
+| Backend | `tsc` → `back/dist/back/server.js` |
+| Frontend | Vite + `tsc --noEmit` (проверка типов) |
+| Shared | Импортируется через `@shared/*` (frontend) и относительные пути (backend) |
 
 ---
 
@@ -102,7 +136,7 @@ src/
 | REST | `GET /api/students`, `POST /api/students/:id/{comment,verdict,score,submit-answers}` |
 | REST | `POST /api/recording/{start,chunk,stop}`, `GET /api/recordings` |
 | REST | `GET /recordings/:file` (Range-стриминг) |
-| Socket | `student_join`, `proctor_join`, `ai_violation`, `banned`, `students_update`, `init` |
+| Socket | `student_join`, `proctor_join`, `ai_violation`, `banned`, `students_update`, `init`, `chat_message` |
 | React | `StudentExam({ session, onLogout })`, `ProctorDashboard({ session, onLogout })` |
 
 ---
@@ -111,7 +145,8 @@ src/
 
 | Было (God Object) | Стало |
 |---|---|
-| `server.js` (~270 строк: HTTP + Socket + FS + бизнес-логика) | `server.js` (~35 строк) + 4 слоя |
-| `StudentStore.js` (хранение + грейдинг + нарушения) | `domain/` + `InMemoryStudentRepository` + `StudentService` |
+| `server.js` (~270 строк) | `server.ts` (~35 строк) + 4 слоя |
+| `StudentStore.js` | `domain/` + `InMemoryStudentRepository` + `StudentService` |
 | `StudentExam.jsx` (UI + socket + timer + AI + запись) | UI + 5 специализированных хуков |
 | `ProctorDashboard.jsx` (UI + socket + fetch) | UI + `useProctorSocket` + API-слой |
+| JavaScript без типов | TypeScript + shared contracts |

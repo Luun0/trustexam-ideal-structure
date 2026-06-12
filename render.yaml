@@ -3,9 +3,15 @@ services:
     name: trustexam-api
     runtime: node
     rootDir: back
-    buildCommand: npm install
+    buildCommand: npm install && npm run build
     startCommand: npm start
     plan: free
+    disk:
+      name: recordings
+      mountPath: /var/data/recordings
+      sizeGB: 1
     envVars:
       - key: NODE_VERSION
         value: "20"
+      - key: VIDEOS_DIR
+        value: /var/data/recordings

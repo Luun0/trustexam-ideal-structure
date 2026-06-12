@@ -16,7 +16,7 @@
 3. Подключи репозиторий `Luun0/trustexam-ideal-structure`
 4. Настройки:
    - **Root Directory:** `back`
-   - **Build Command:** `npm install`
+   - **Build Command:** `npm install && npm run build`
    - **Start Command:** `npm start`
    - **Plan:** Free
 5. Нажми **Create Web Service**
@@ -59,7 +59,7 @@
 
 ```bash
 # Backend
-cd back && npm install && node server.js
+cd back && npm install && npm run build && npm start
 
 # Frontend
 npm install && npm run dev
